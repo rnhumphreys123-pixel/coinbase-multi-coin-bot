@@ -13,22 +13,31 @@ EQUITY_LOG_FILE = "equity_log.csv"
 
 class PaperTrader:
 
-    def __init__(self, symbol, starting_balance=1000):
+    def __init__(self, symbol):
 
         self.symbol = symbol
-        self.starting_balance = starting_balance
+
+        total_starting_balance = PORTFOLIO_SETTINGS[
+            "starting_balance"
+        ]
+
+        allocation = COIN_CONFIG[symbol][
+            "allocation"
+        ]
+
+        self.starting_balance = (
+            total_starting_balance * allocation
+        )
 
         self.load_state()
 
     def load_state(self):
 
         try:
-
             with open(STATE_FILE, "r") as file:
                 state = json.load(file)
 
         except FileNotFoundError:
-
             state = {}
 
         if self.symbol not in state:
@@ -37,7 +46,9 @@ class PaperTrader:
                 "balance": self.starting_balance,
                 "position": 0,
                 "entry_price": 0,
-                "highest_price": 0
+                "highest_price": 0,
+                "current_price": 0,
+                "trailing_stop_price": 0
             }
 
             with open(STATE_FILE, "w") as file:
@@ -63,6 +74,16 @@ class PaperTrader:
             self.entry_price
         )
 
+        self.current_price = state[self.symbol].get(
+            "current_price",
+            0
+        )
+
+        self.trailing_stop_price = state[self.symbol].get(
+            "trailing_stop_price",
+            0
+        )
+
         if self.position > 0 and self.highest_price == 0:
 
             self.highest_price = self.entry_price
@@ -71,23 +92,34 @@ class PaperTrader:
     def save_state(self):
 
         try:
-
             with open(STATE_FILE, "r") as file:
                 state = json.load(file)
 
         except FileNotFoundError:
-
             state = {}
 
         state[self.symbol] = {
             "balance": self.balance,
             "position": self.position,
             "entry_price": self.entry_price,
-            "highest_price": self.highest_price
+            "highest_price": self.highest_price,
+            "current_price": self.current_price,
+            "trailing_stop_price": self.trailing_stop_price
         }
 
         with open(STATE_FILE, "w") as file:
             json.dump(state, file, indent=4)
+
+    def update_market_info(
+        self,
+        current_price,
+        trailing_stop_price=0
+    ):
+
+        self.current_price = current_price
+        self.trailing_stop_price = trailing_stop_price
+
+        self.save_state()
 
     def update_highest_price(self, current_price):
 
@@ -197,8 +229,8 @@ class PaperTrader:
                 if stop_distance <= 0:
 
                     print(
-                        "Invalid stop loss "
-                        "distance."
+                        "Invalid stop loss distance. "
+                        "No trade taken."
                     )
 
                     return
@@ -222,6 +254,7 @@ class PaperTrader:
 
             self.entry_price = price
             self.highest_price = price
+            self.current_price = price
 
             self.balance -= amount_to_spend
 
@@ -251,8 +284,7 @@ class PaperTrader:
                 f"🟢 BUY {self.symbol}\n"
                 f"Price: ${price:.2f}\n"
                 f"Amount: ${amount_to_spend:.2f}\n"
-                f"Risk: "
-                f"{risk_per_trade * 100:.2f}%"
+                f"Risk: {risk_per_trade * 100:.2f}%"
             )
 
         else:
@@ -289,9 +321,7 @@ class PaperTrader:
                 f"at ${price:.2f}"
             )
 
-            print(
-                f"Reason: {reason}"
-            )
+            print(f"Reason: {reason}")
 
             print(
                 f"Profit: "
@@ -315,6 +345,8 @@ class PaperTrader:
             self.position = 0
             self.entry_price = 0
             self.highest_price = 0
+            self.current_price = price
+            self.trailing_stop_price = 0
 
             self.save_state()
 
@@ -354,6 +386,12 @@ class PaperTrader:
                     * atr_multiplier
                 )
             )
+
+            self.trailing_stop_price = trailing_stop
+
+        self.current_price = current_price
+
+        self.save_state()
 
         self.log_equity(current_price)
 

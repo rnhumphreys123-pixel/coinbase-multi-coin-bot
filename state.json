@@ -3,12 +3,16 @@
         "balance": 129.27141464194472,
         "position": 0.00709138174198026,
         "entry_price": 80482.0,
-        "highest_price": 81039.85
+        "highest_price": 81911.75,
+        "current_price": 81682.8,
+        "trailing_stop_price": 79787.88069783871
     },
     "SOL/USD": {
         "balance": 300,
         "position": 0,
         "entry_price": 0,
-        "highest_price": 0
+        "highest_price": 0,
+        "current_price": 93.49,
+        "trailing_stop_price": 0
     }
 }
