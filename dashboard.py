@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import json
+import plotly.graph_objects as go
 
 from config import (
     PORTFOLIO_SETTINGS,
@@ -18,19 +19,58 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown("""
+<style>
+.main {
+    background-color: #0e1117;
+}
+
+h1, h2, h3 {
+    color: #f8f9fa;
+}
+
+section[data-testid="stSidebar"] {
+    background-color: #161b22;
+}
+
+div[data-testid="metric-container"] {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+div[data-testid="metric-container"] label {
+    color: #8b949e;
+}
+
+div[data-testid="metric-container"] div {
+    color: #f0f6fc;
+}
+</style>
+""", unsafe_allow_html=True)
+
 STATE_FILE = "state.json"
 EQUITY_LOG_FILE = "equity_log.csv"
 TRADE_LOG_FILE = "trade_log.csv"
 EVENT_LOG_FILE = "events_log.csv"
 SIGNALS_LOG_FILE = "signals_log.csv"
+CANDLES_LOG_FILE = "candles_log.csv"
 
-st.title("📊 Coinbase Trading Bot Dashboard")
+st.title("🚀 Coinbase Multi-Coin Trading Dashboard")
 st.caption("Live paper trading command center")
 
-st.sidebar.header("Dashboard Controls")
+st.sidebar.title("⚙️ Control Panel")
+st.sidebar.success("Bot Status: ONLINE")
 
-if st.sidebar.button("Refresh Dashboard"):
+if st.sidebar.button("🔄 Refresh Dashboard"):
     st.rerun()
+
+st.sidebar.markdown("---")
+st.sidebar.write("### Active Symbols")
+
+for symbol in ACTIVE_SYMBOLS:
+    st.sidebar.write(f"• {symbol}")
 
 try:
     with open(STATE_FILE, "r") as file:
@@ -93,7 +133,6 @@ try:
     signal_cols = st.columns(len(ACTIVE_SYMBOLS))
 
     for index, symbol in enumerate(ACTIVE_SYMBOLS):
-
         if "symbol" in events_df.columns:
             symbol_events = events_df[
                 events_df["symbol"] == symbol
@@ -111,7 +150,7 @@ try:
             latest_message = latest_event.iloc[0].get("message", "No message")
             latest_event_type = latest_event.iloc[0].get("event", "UNKNOWN")
         else:
-            latest_message = "No recent event for this symbol"
+            latest_message = "No recent event"
             latest_event_type = "UNKNOWN"
 
         with signal_cols[index]:
@@ -160,6 +199,145 @@ try:
 except FileNotFoundError:
     st.info("No signals log found yet.")
 
+st.header("🕯️ Live Candlestick Charts")
+
+try:
+    candles_df = pd.read_csv(CANDLES_LOG_FILE, encoding="utf-8-sig")
+    candles_df.columns = candles_df.columns.str.strip()
+    candles_df["timestamp"] = pd.to_datetime(candles_df["timestamp"])
+
+    candles_df = candles_df[
+        candles_df["symbol"].isin(ACTIVE_SYMBOLS)
+    ]
+
+    try:
+        trades_df = pd.read_csv(TRADE_LOG_FILE, encoding="utf-8-sig")
+        trades_df.columns = trades_df.columns.str.strip()
+
+        if "timestamp" in trades_df.columns:
+            trades_df["timestamp"] = pd.to_datetime(trades_df["timestamp"])
+
+    except FileNotFoundError:
+        trades_df = pd.DataFrame()
+
+    for symbol in ACTIVE_SYMBOLS:
+
+        symbol_df = candles_df[
+            candles_df["symbol"] == symbol
+        ].copy()
+
+        if symbol_df.empty:
+            continue
+
+        symbol_df = symbol_df.sort_values("timestamp").tail(120)
+
+        st.subheader(symbol)
+
+        fig = go.Figure()
+
+        fig.add_trace(
+            go.Candlestick(
+                x=symbol_df["timestamp"],
+                open=symbol_df["open"],
+                high=symbol_df["high"],
+                low=symbol_df["low"],
+                close=symbol_df["close"],
+                name=symbol
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=symbol_df["timestamp"],
+                y=symbol_df["ema_20"],
+                mode="lines",
+                name="EMA 20"
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=symbol_df["timestamp"],
+                y=symbol_df["ema_50"],
+                mode="lines",
+                name="EMA 50"
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=symbol_df["timestamp"],
+                y=symbol_df["ema_200"],
+                mode="lines",
+                name="EMA 200"
+            )
+        )
+
+        if not trades_df.empty and "symbol" in trades_df.columns:
+            symbol_trades = trades_df[
+                trades_df["symbol"] == symbol
+            ].copy()
+
+            buys = symbol_trades[
+                symbol_trades["action"] == "BUY"
+            ]
+
+            sells = symbol_trades[
+                symbol_trades["action"] == "SELL"
+            ]
+
+            if not buys.empty:
+                fig.add_trace(
+                    go.Scatter(
+                        x=buys["timestamp"],
+                        y=buys["price"],
+                        mode="markers",
+                        marker=dict(
+                            symbol="triangle-up",
+                            size=14,
+                            color="lime"
+                        ),
+                        name="BUY"
+                    )
+                )
+
+            if not sells.empty:
+                fig.add_trace(
+                    go.Scatter(
+                        x=sells["timestamp"],
+                        y=sells["price"],
+                        mode="markers",
+                        marker=dict(
+                            symbol="triangle-down",
+                            size=14,
+                            color="red"
+                        ),
+                        name="SELL"
+                    )
+                )
+
+        fig.update_layout(
+            height=500,
+            xaxis_rangeslider_visible=False,
+            template="plotly_dark",
+            margin=dict(l=20, r=20, t=40, b=20),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+except FileNotFoundError:
+    st.info("No candle log found yet.")
+
 st.header("📌 Portfolio State")
 
 position_cols = st.columns(len(ACTIVE_SYMBOLS))
@@ -192,55 +370,21 @@ for index, symbol in enumerate(ACTIVE_SYMBOLS):
         else:
             st.warning("NO POSITION")
 
-        st.metric(
-            "Position Value",
-            f"${position_value:.2f}"
-        )
+        st.metric("Position Value", f"${position_value:.2f}")
 
         pnl_label = "🟢 Profit"
 
         if unrealized_pnl < 0:
             pnl_label = "🔴 Loss"
-
         elif unrealized_pnl == 0:
             pnl_label = "⚪ Flat"
 
-        st.metric(
-            pnl_label,
-            f"${unrealized_pnl:.2f}"
-        )
+        st.metric(pnl_label, f"${unrealized_pnl:.2f}")
 
         st.write(f"Entry Price: ${entry_price:.2f}")
         st.write(f"Current Price: ${current_price:.2f}")
         st.write(f"Trailing Stop: ${trailing_stop:.2f}")
         st.write(f"Highest Price: ${highest_price:.2f}")
-
-if state:
-    state_rows = []
-
-    for symbol in ACTIVE_SYMBOLS:
-        data = state.get(symbol, {})
-
-        state_rows.append({
-            "Symbol": symbol,
-            "Cash Balance": round(data.get("balance", 0), 2),
-            "Position": round(data.get("position", 0), 8),
-            "Entry Price": round(data.get("entry_price", 0), 2),
-            "Highest Price": round(data.get("highest_price", 0), 2),
-            "Current Price": round(data.get("current_price", 0), 2),
-            "Trailing Stop": round(data.get("trailing_stop_price", 0), 2),
-            "In Position": "Yes" if data.get("position", 0) > 0 else "No"
-        })
-
-    state_df = pd.DataFrame(state_rows)
-
-    st.dataframe(
-        state_df,
-        use_container_width=True
-    )
-
-else:
-    st.warning("No state data found yet.")
 
 st.header("📈 Equity Curve")
 
@@ -255,10 +399,6 @@ if not equity_df.empty and not active_equity.empty:
         y="total_value",
         color="label"
     )
-
-    # --------------------------------------------------
-    # DRAWDOWN CHART
-    # --------------------------------------------------
 
     drawdown_df = active_equity.copy()
     drawdown_df = drawdown_df.sort_values("timestamp")
@@ -331,4 +471,5 @@ try:
 except FileNotFoundError:
     st.info("No event log found yet.")
 
+st.markdown("---")
 st.caption("Coinbase Multi-Coin Paper Trading Dashboard")
