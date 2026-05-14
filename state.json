@@ -1,0 +1,14 @@
+{
+    "BTC/USD": {
+        "balance": 129.27141464194472,
+        "position": 0.00709138174198026,
+        "entry_price": 80482.0,
+        "highest_price": 81039.85
+    },
+    "SOL/USD": {
+        "balance": 300,
+        "position": 0,
+        "entry_price": 0,
+        "highest_price": 0
+    }
+}
