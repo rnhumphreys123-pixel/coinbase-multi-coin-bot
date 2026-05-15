@@ -14,16 +14,9 @@ from strategy import generate_signal
 from paper_trader import PaperTrader
 from notifications import send_telegram_message
 
-from config import (
-    COIN_CONFIG,
-    ACTIVE_SYMBOLS
-)
-
+from config import COIN_CONFIG, ACTIVE_SYMBOLS
 from risk_manager import trading_allowed
-
-# --------------------------------------------------
-# ENVIRONMENT
-# --------------------------------------------------
+from bot_control import is_bot_paused
 
 load_dotenv()
 
@@ -37,16 +30,9 @@ exchange = ccxt.coinbase({
     "secret": api_secret,
 })
 
-# --------------------------------------------------
-# FILES
-# --------------------------------------------------
-
 SIGNALS_LOG_FILE = "signals_log.csv"
 CANDLES_LOG_FILE = "candles_log.csv"
 
-# --------------------------------------------------
-# LOG SIGNAL
-# --------------------------------------------------
 
 def log_signal(
     symbol,
@@ -59,13 +45,7 @@ def log_signal(
     ema_200,
     atr
 ):
-
-    with open(
-        SIGNALS_LOG_FILE,
-        "a",
-        newline=""
-    ) as file:
-
+    with open(SIGNALS_LOG_FILE, "a", newline="") as file:
         writer = csv.writer(file)
 
         writer.writerow([
@@ -81,22 +61,9 @@ def log_signal(
             round(atr, 2)
         ])
 
-# --------------------------------------------------
-# LOG CANDLE
-# --------------------------------------------------
 
-def log_candle(
-    row,
-    symbol,
-    timeframe
-):
-
-    with open(
-        CANDLES_LOG_FILE,
-        "a",
-        newline=""
-    ) as file:
-
+def log_candle(row, symbol, timeframe):
+    with open(CANDLES_LOG_FILE, "a", newline="") as file:
         writer = csv.writer(file)
 
         writer.writerow([
@@ -116,23 +83,14 @@ def log_candle(
             row["signal"]
         ])
 
-# --------------------------------------------------
-# MAIN LOOP
-# --------------------------------------------------
 
 for symbol in ACTIVE_SYMBOLS:
 
     settings = COIN_CONFIG[symbol]
-
     timeframe = settings["timeframe"]
 
     print("\n==============================")
-
-    print(
-        f"Checking {symbol} "
-        f"on {timeframe}"
-    )
-
+    print(f"Checking {symbol} on {timeframe}")
     print("==============================")
 
     print("Fetching market data...")
@@ -159,10 +117,6 @@ for symbol in ACTIVE_SYMBOLS:
         df["timestamp"],
         unit="ms"
     )
-
-    # --------------------------------------------------
-    # INDICATORS
-    # --------------------------------------------------
 
     df["ema_20"] = EMAIndicator(
         close=df["close"],
@@ -193,10 +147,6 @@ for symbol in ACTIVE_SYMBOLS:
 
     df["atr"] = atr.average_true_range()
 
-    # --------------------------------------------------
-    # SIGNALS
-    # --------------------------------------------------
-
     df["signal"] = df.apply(
         lambda row: generate_signal(
             row,
@@ -208,14 +158,8 @@ for symbol in ACTIVE_SYMBOLS:
     latest = df.iloc[-1]
 
     signal = latest["signal"]
-
     current_price = latest["close"]
-
     atr_value = latest["atr"]
-
-    # --------------------------------------------------
-    # LOGGING
-    # --------------------------------------------------
 
     log_signal(
         symbol,
@@ -235,25 +179,15 @@ for symbol in ACTIVE_SYMBOLS:
         timeframe
     )
 
-    # --------------------------------------------------
-    # PAPER TRADER
-    # --------------------------------------------------
-
     trader = PaperTrader(symbol)
 
     new_trade_stop_loss = (
         current_price
         - (
             atr_value
-            * settings[
-                "atr_stop_multiplier"
-            ]
+            * settings["atr_stop_multiplier"]
         )
     )
-
-    # --------------------------------------------------
-    # ACTIVE POSITION
-    # --------------------------------------------------
 
     if trader.position > 0:
 
@@ -265,9 +199,7 @@ for symbol in ACTIVE_SYMBOLS:
             trader.highest_price
             - (
                 atr_value
-                * settings[
-                    "atr_stop_multiplier"
-                ]
+                * settings["atr_stop_multiplier"]
             )
         )
 
@@ -275,9 +207,7 @@ for symbol in ACTIVE_SYMBOLS:
             trader.entry_price
             - (
                 atr_value
-                * settings[
-                    "atr_stop_multiplier"
-                ]
+                * settings["atr_stop_multiplier"]
             )
         )
 
@@ -285,57 +215,33 @@ for symbol in ACTIVE_SYMBOLS:
             trader.entry_price
             + (
                 atr_value
-                * settings[
-                    "atr_take_profit_multiplier"
-                ]
+                * settings["atr_take_profit_multiplier"]
             )
         )
 
-        use_trailing_stop = settings[
-            "use_trailing_stop"
-        ]
+        use_trailing_stop = settings["use_trailing_stop"]
 
         sell_reason = None
 
         if (
             use_trailing_stop
-            and current_price
-            <= trailing_stop_price
+            and current_price <= trailing_stop_price
         ):
+            sell_reason = "Trailing Stop Hit"
 
-            sell_reason = (
-                "Trailing Stop Hit"
-            )
+        elif current_price <= active_stop_loss:
+            sell_reason = "Stop Loss Hit"
 
-        elif (
-            current_price
-            <= active_stop_loss
-        ):
-
-            sell_reason = (
-                "Stop Loss Hit"
-            )
-
-        elif (
-            current_price
-            >= active_take_profit
-        ):
-
-            sell_reason = (
-                "Take Profit Hit"
-            )
+        elif current_price >= active_take_profit:
+            sell_reason = "Take Profit Hit"
 
         elif signal == "SELL":
-
-            sell_reason = (
-                "Signal Reversal"
-            )
+            sell_reason = "Signal Reversal"
 
         if sell_reason is not None:
 
             message = (
-                f"{sell_reason} "
-                f"for {symbol} "
+                f"{sell_reason} for {symbol} "
                 f"at ${current_price:.2f}"
             )
 
@@ -355,12 +261,9 @@ for symbol in ACTIVE_SYMBOLS:
 
             message = (
                 f"Holding {symbol}\n"
-                f"Current Price: "
-                f"${current_price:.2f}\n"
-                f"Highest Price: "
-                f"${trader.highest_price:.2f}\n"
-                f"Trailing Stop: "
-                f"${trailing_stop_price:.2f}"
+                f"Current Price: ${current_price:.2f}\n"
+                f"Highest Price: ${trader.highest_price:.2f}\n"
+                f"Trailing Stop: ${trailing_stop_price:.2f}"
             )
 
             print(message)
@@ -370,53 +273,55 @@ for symbol in ACTIVE_SYMBOLS:
                 message
             )
 
-    # --------------------------------------------------
-    # NEW POSITION
-    # --------------------------------------------------
-
     else:
 
         if signal == "BUY":
 
-            allowed, reason = (
-                trading_allowed(symbol)
-            )
-
-            if allowed:
-
-                trader.buy(
-                    current_price,
-                    new_trade_stop_loss,
-                    settings[
-                        "risk_per_trade"
-                    ]
-                )
-
-            else:
+            if is_bot_paused():
 
                 message = (
-                    f"Trade blocked "
-                    f"for {symbol}: "
-                    f"{reason}"
+                    f"Bot is paused. "
+                    f"New trade blocked for {symbol}."
                 )
 
                 print(message)
 
                 trader.log_event(
-                    "RISK_BLOCK",
+                    "BOT_PAUSED",
                     message
                 )
 
-                send_telegram_message(
-                    message
-                )
+            else:
+
+                allowed, reason = trading_allowed(symbol)
+
+                if allowed:
+
+                    trader.buy(
+                        current_price,
+                        new_trade_stop_loss,
+                        settings["risk_per_trade"]
+                    )
+
+                else:
+
+                    message = (
+                        f"Trade blocked for {symbol}: "
+                        f"{reason}"
+                    )
+
+                    print(message)
+
+                    trader.log_event(
+                        "RISK_BLOCK",
+                        message
+                    )
+
+                    send_telegram_message(message)
 
         else:
 
-            message = (
-                f"No trade for "
-                f"{symbol}."
-            )
+            message = f"No trade for {symbol}."
 
             print(message)
 
@@ -425,59 +330,20 @@ for symbol in ACTIVE_SYMBOLS:
                 message
             )
 
-    # --------------------------------------------------
-    # STATUS
-    # --------------------------------------------------
-
     trader.status(
         current_price,
         atr_value,
-        settings[
-            "atr_stop_multiplier"
-        ]
+        settings["atr_stop_multiplier"]
     )
-
-    # --------------------------------------------------
-    # DEBUG OUTPUT
-    # --------------------------------------------------
 
     print(df.tail())
 
     print("\nLatest Signal:")
-
     print(f"{symbol}: {signal}")
-
-    print(
-        f"Timeframe: "
-        f"{timeframe}"
-    )
-
-    print(
-        f"Close: "
-        f"{current_price}"
-    )
-
-    print(
-        f"RSI: "
-        f"{latest['rsi']:.2f}"
-    )
-
-    print(
-        f"EMA 20: "
-        f"{latest['ema_20']:.2f}"
-    )
-
-    print(
-        f"EMA 50: "
-        f"{latest['ema_50']:.2f}"
-    )
-
-    print(
-        f"EMA 200: "
-        f"{latest['ema_200']:.2f}"
-    )
-
-    print(
-        f"ATR: "
-        f"{latest['atr']:.2f}"
-    )
+    print(f"Timeframe: {timeframe}")
+    print(f"Close: {current_price}")
+    print(f"RSI: {latest['rsi']:.2f}")
+    print(f"EMA 20: {latest['ema_20']:.2f}")
+    print(f"EMA 50: {latest['ema_50']:.2f}")
+    print(f"EMA 200: {latest['ema_200']:.2f}")
+    print(f"ATR: {latest['atr']:.2f}")

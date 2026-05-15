@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 import plotly.graph_objects as go
+from bot_control import is_bot_paused, set_bot_paused
 
 from config import PORTFOLIO_SETTINGS, ACTIVE_SYMBOLS
 
@@ -45,7 +46,20 @@ st.title("🚀 Coinbase Multi-Coin Trading Dashboard")
 st.caption("Live paper trading command center")
 
 st.sidebar.title("⚙️ Control Panel")
-st.sidebar.success("Bot Status: ONLINE")
+bot_paused = is_bot_paused()
+
+if bot_paused:
+    st.sidebar.error("Bot Mode: PAUSED")
+else:
+    st.sidebar.success("Bot Mode: RUNNING")
+
+if st.sidebar.button("Pause Bot"):
+    set_bot_paused(True)
+    st.rerun()
+
+if st.sidebar.button("Resume Bot"):
+    set_bot_paused(False)
+    st.rerun()
 
 if st.sidebar.button("🔄 Refresh Dashboard"):
     st.rerun()
