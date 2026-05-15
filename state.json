@@ -1,18 +1,18 @@
 {
     "BTC/USD": {
-        "balance": 129.27141464194472,
-        "position": 0.00709138174198026,
-        "entry_price": 80482.0,
-        "highest_price": 81911.75,
-        "current_price": 81434.0,
-        "trailing_stop_price": 79748.57784069586
+        "balance": 691.3723413174372,
+        "position": 0,
+        "entry_price": 0,
+        "highest_price": 0,
+        "current_price": 79230.01,
+        "trailing_stop_price": 0
     },
     "SOL/USD": {
         "balance": 300,
         "position": 0,
         "entry_price": 0,
         "highest_price": 0,
-        "current_price": 92.74,
+        "current_price": 89.48,
         "trailing_stop_price": 0
     }
 }

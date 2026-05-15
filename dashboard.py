@@ -64,9 +64,6 @@ if st.sidebar.button("Resume Bot"):
     set_bot_paused(False)
     st.rerun()
 
-if st.sidebar.button("🔄 Refresh Dashboard"):
-    st.rerun()
-
 st.sidebar.markdown("---")
 
 auto_refresh = st.sidebar.checkbox(
@@ -193,7 +190,14 @@ with overview_tab:
     try:
         status_candles_df = pd.read_csv(CANDLES_LOG_FILE, encoding="utf-8-sig")
         status_candles_df.columns = status_candles_df.columns.str.strip()
-        status_candles_df["timestamp"] = pd.to_datetime(status_candles_df["timestamp"])
+        status_candles_df["timestamp"] = pd.to_datetime(
+        status_candles_df["timestamp"],
+             errors="coerce"
+        )
+
+        status_candles_df = status_candles_df.dropna(
+            subset=["timestamp"]
+        )
         last_candle_time = status_candles_df["timestamp"].max()
     except FileNotFoundError:
         pass
