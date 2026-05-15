@@ -3,6 +3,8 @@ from streamlit_autorefresh import st_autorefresh
 import pandas as pd
 import json
 import plotly.graph_objects as go
+import subprocess
+
 from bot_control import is_bot_paused, set_bot_paused
 
 from config import PORTFOLIO_SETTINGS, ACTIVE_SYMBOLS
@@ -83,6 +85,26 @@ if auto_refresh:
         interval=refresh_seconds * 1000,
         key="dashboard_auto_refresh"
     )
+
+st.sidebar.markdown("---")
+
+if st.sidebar.button("▶️ Run Bot Now"):
+
+    try:
+
+        subprocess.Popen(
+            ["python", "market_data.py"]
+        )
+
+        st.sidebar.success(
+            "Bot run started."
+        )
+
+    except Exception as error:
+
+        st.sidebar.error(
+            f"Error: {error}"
+        )
 
 st.sidebar.markdown("---")
 st.sidebar.write("### Active Symbols")
