@@ -132,6 +132,54 @@ with overview_tab:
     r2.metric("Open Positions", get_open_position_count())
     r3.metric("Portfolio Drawdown", f"{get_portfolio_drawdown() * 100:.2f}%")
 
+    st.header("🧭 Bot Status Panel")
+
+    bot_mode = "PAUSED" if is_bot_paused() else "RUNNING"
+
+    last_signal_time = "No signal data"
+    last_candle_time = "No candle data"
+    last_trade_time = "No trade data"
+
+    try:
+        status_signals_df = pd.read_csv(SIGNALS_LOG_FILE, encoding="utf-8-sig")
+        status_signals_df.columns = status_signals_df.columns.str.strip()
+        status_signals_df["timestamp"] = pd.to_datetime(status_signals_df["timestamp"])
+        last_signal_time = status_signals_df["timestamp"].max()
+    except FileNotFoundError:
+        pass
+
+    try:
+        status_candles_df = pd.read_csv(CANDLES_LOG_FILE, encoding="utf-8-sig")
+        status_candles_df.columns = status_candles_df.columns.str.strip()
+        status_candles_df["timestamp"] = pd.to_datetime(status_candles_df["timestamp"])
+        last_candle_time = status_candles_df["timestamp"].max()
+    except FileNotFoundError:
+        pass
+
+    try:
+        status_trades_df = pd.read_csv(TRADE_LOG_FILE, encoding="utf-8-sig")
+        status_trades_df.columns = status_trades_df.columns.str.strip()
+        status_trades_df["timestamp"] = pd.to_datetime(status_trades_df["timestamp"])
+        last_trade_time = status_trades_df["timestamp"].max()
+    except FileNotFoundError:
+        pass
+
+    def format_time(value):
+        if isinstance(value, str):
+            return value
+
+        try:
+            return pd.to_datetime(value).strftime("%m-%d %H:%M")
+        except:
+            return str(value)
+
+    s1, s2, s3, s4 = st.columns(4)
+
+    s1.metric("Bot Mode", bot_mode)
+    s2.metric("Last Signal", format_time(last_signal_time))
+    s3.metric("Last Candle", format_time(last_candle_time))
+    s4.metric("Last Trade", format_time(last_trade_time))
+
     st.header("📌 Open Positions")
 
     position_cols = st.columns(len(ACTIVE_SYMBOLS))
