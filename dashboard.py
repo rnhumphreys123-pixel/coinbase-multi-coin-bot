@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 import pandas as pd
 import json
 import plotly.graph_objects as go
@@ -63,6 +64,25 @@ if st.sidebar.button("Resume Bot"):
 
 if st.sidebar.button("🔄 Refresh Dashboard"):
     st.rerun()
+
+st.sidebar.markdown("---")
+
+auto_refresh = st.sidebar.checkbox(
+    "Auto Refresh",
+    value=False
+)
+
+refresh_seconds = st.sidebar.selectbox(
+    "Refresh Interval",
+    [15, 30, 60],
+    index=2
+)
+
+if auto_refresh:
+    st_autorefresh(
+        interval=refresh_seconds * 1000,
+        key="dashboard_auto_refresh"
+    )
 
 st.sidebar.markdown("---")
 st.sidebar.write("### Active Symbols")
