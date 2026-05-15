@@ -433,6 +433,226 @@ if not equity_df.empty and not active_equity.empty:
 else:
     st.info("No equity log found yet.")
 
+# --------------------------------------------------
+# EQUITY GROWTH ANALYTICS
+# --------------------------------------------------
+
+st.header("📈 Equity Growth Analytics")
+
+try:
+
+    growth_df = pd.read_csv(
+        EQUITY_LOG_FILE,
+        encoding="utf-8-sig"
+    )
+
+    growth_df.columns = growth_df.columns.str.strip()
+
+    growth_df["timestamp"] = pd.to_datetime(
+        growth_df["timestamp"]
+    )
+
+    growth_df = growth_df[
+        growth_df["symbol"].isin(ACTIVE_SYMBOLS)
+    ]
+
+    portfolio_growth = (
+        growth_df
+        .groupby("timestamp")["total_value"]
+        .sum()
+        .reset_index()
+    )
+
+    portfolio_growth = portfolio_growth.sort_values(
+        "timestamp"
+    )
+
+    portfolio_growth["cumulative_return_pct"] = (
+        (
+            portfolio_growth["total_value"]
+            - starting_value
+        )
+        / starting_value
+    ) * 100
+
+    growth_fig = go.Figure()
+
+    growth_fig.add_trace(
+        go.Scatter(
+            x=portfolio_growth["timestamp"],
+            y=portfolio_growth["cumulative_return_pct"],
+            mode="lines",
+            name="Portfolio Growth %"
+        )
+    )
+
+    growth_fig.update_layout(
+        template="plotly_dark",
+        height=400,
+        margin=dict(l=20, r=20, t=40, b=20),
+        yaxis_title="Return %",
+        xaxis_title="Time"
+    )
+
+    st.plotly_chart(
+        growth_fig,
+        use_container_width=True
+    )
+
+except FileNotFoundError:
+
+    st.info(
+        "No equity growth data found yet."
+    )
+
+# --------------------------------------------------
+# STRATEGY ANALYTICS
+# --------------------------------------------------
+
+st.header("📊 Strategy Analytics")
+
+try:
+    analytics_df = pd.read_csv(TRADE_LOG_FILE, encoding="utf-8-sig")
+    analytics_df.columns = analytics_df.columns.str.strip()
+
+    if "symbol" in analytics_df.columns:
+        analytics_df = analytics_df[
+            analytics_df["symbol"].isin(ACTIVE_SYMBOLS)
+        ]
+
+    sells_df = analytics_df[
+        analytics_df["action"] == "SELL"
+    ].copy()
+
+    if not sells_df.empty:
+
+        sells_df["profit"] = sells_df["profit"].astype(float)
+
+        total_trades = len(sells_df)
+        wins = sells_df[sells_df["profit"] > 0]
+        losses = sells_df[sells_df["profit"] <= 0]
+
+        win_rate = (len(wins) / total_trades) * 100
+        total_profit = sells_df["profit"].sum()
+        average_win = wins["profit"].mean() if not wins.empty else 0
+        average_loss = losses["profit"].mean() if not losses.empty else 0
+        best_trade = sells_df["profit"].max()
+        worst_trade = sells_df["profit"].min()
+
+        gross_profit = wins["profit"].sum()
+        gross_loss = abs(losses["profit"].sum())
+
+        profit_factor = (
+            gross_profit / gross_loss
+            if gross_loss > 0
+            else 0
+        )
+
+        a1, a2, a3, a4 = st.columns(4)
+
+        a1.metric("Completed Trades", total_trades)
+        a2.metric("Win Rate", f"{win_rate:.2f}%")
+        a3.metric("Total Profit", f"${total_profit:.2f}")
+        a4.metric("Profit Factor", f"{profit_factor:.2f}")
+
+        b1, b2, b3, b4 = st.columns(4)
+
+        b1.metric("Average Win", f"${average_win:.2f}")
+        b2.metric("Average Loss", f"${average_loss:.2f}")
+        b3.metric("Best Trade", f"${best_trade:.2f}")
+        b4.metric("Worst Trade", f"${worst_trade:.2f}")
+
+        win_loss_fig = go.Figure(
+            data=[
+                go.Pie(
+                    labels=["Wins", "Losses"],
+                    values=[len(wins), len(losses)],
+                    hole=0.45
+                )
+            ]
+        )
+
+        win_loss_fig.update_layout(
+            template="plotly_dark",
+            height=350,
+            margin=dict(l=20, r=20, t=40, b=20)
+        )
+
+        st.plotly_chart(
+            win_loss_fig,
+            use_container_width=True
+        )
+
+    else:
+        st.info("No completed sell trades yet.")
+
+except FileNotFoundError:
+    st.info("No trade log found yet.")
+
+# --------------------------------------------------
+# EXIT REASON ANALYTICS
+# --------------------------------------------------
+
+st.header("🚪 Exit Reason Analytics")
+
+try:
+    exit_df = pd.read_csv(TRADE_LOG_FILE, encoding="utf-8-sig")
+    exit_df.columns = exit_df.columns.str.strip()
+
+    if "symbol" in exit_df.columns:
+        exit_df = exit_df[
+            exit_df["symbol"].isin(ACTIVE_SYMBOLS)
+        ]
+
+    sells = exit_df[
+        exit_df["action"] == "SELL"
+    ].copy()
+
+    if not sells.empty and "reason" in sells.columns:
+
+        sells["profit"] = sells["profit"].astype(float)
+        sells["reason"] = sells["reason"].fillna("Unknown / Old Trade")
+
+        reason_summary = sells.groupby("reason").agg(
+            trades=("profit", "count"),
+            total_profit=("profit", "sum"),
+            average_profit=("profit", "mean"),
+            wins=("profit", lambda x: (x > 0).sum()),
+            losses=("profit", lambda x: (x <= 0).sum())
+        ).reset_index()
+
+        st.dataframe(
+            reason_summary,
+            use_container_width=True
+        )
+
+        reason_fig = go.Figure()
+
+        reason_fig.add_trace(
+            go.Bar(
+                x=reason_summary["reason"],
+                y=reason_summary["total_profit"],
+                name="Total Profit"
+            )
+        )
+
+        reason_fig.update_layout(
+            template="plotly_dark",
+            height=350,
+            margin=dict(l=20, r=20, t=40, b=20)
+        )
+
+        st.plotly_chart(
+            reason_fig,
+            use_container_width=True
+        )
+
+    else:
+        st.info("No exit reason data yet.")
+
+except FileNotFoundError:
+    st.info("No trade log found yet.")
+
 st.header("💰 Recent Trades")
 
 try:
