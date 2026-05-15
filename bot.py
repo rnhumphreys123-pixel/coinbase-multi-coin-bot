@@ -1,86 +1,65 @@
-import schedule
 import time
+import json
 import subprocess
 
+from datetime import datetime
 
-def run_trading_bot():
+HEARTBEAT_FILE = "engine_status.json"
 
-    print("\n========================")
-    print("Running multi-coin trading check...")
-    print("========================\n")
-
-    subprocess.run([
-        "venv\\Scripts\\python.exe",
-        "market_data.py"
-    ])
+CHECK_INTERVAL_SECONDS = 300
 
 
-def run_daily_summary():
+def update_heartbeat():
 
-    print("\n========================")
-    print("Sending daily summary...")
-    print("========================\n")
+    heartbeat_data = {
+        "last_heartbeat": datetime.now().isoformat()
+    }
 
-    subprocess.run([
-        "venv\\Scripts\\python.exe",
-        "daily_summary.py"
-    ])
-
-
-def run_performance_report():
-
-    print("\n========================")
-    print("Sending performance report...")
-    print("========================\n")
-
-    subprocess.run([
-        "venv\\Scripts\\python.exe",
-        "performance_report.py"
-    ])
+    with open(HEARTBEAT_FILE, "w") as file:
+        json.dump(
+            heartbeat_data,
+            file,
+            indent=4
+        )
 
 
-def run_exit_reason_report():
-
-    print("\n========================")
-    print("Sending exit reason report...")
-    print("========================\n")
-
-    subprocess.run([
-        "venv\\Scripts\\python.exe",
-        "exit_reason_report.py"
-    ])
-
-
-schedule.every(5).minutes.do(
-    run_trading_bot
-)
-
-schedule.every().day.at(
-    "20:00"
-).do(run_daily_summary)
-
-schedule.every().day.at(
-    "20:05"
-).do(run_performance_report)
-
-schedule.every().day.at(
-    "20:10"
-).do(run_exit_reason_report)
-
-
-print("\n========================")
-print("Multi-Coin Trading Bot Started")
-print("========================")
-
-print("\nScheduled Tasks:")
-print("- Trading checks every 5 minutes")
-print("- Daily summary at 8:00 PM")
-print("- Performance report at 8:05 PM")
-print("- Exit reason report at 8:10 PM")
-
+print("===================================")
+print("COINBASE MULTI-COIN BOT STARTED")
+print("===================================")
 
 while True:
 
-    schedule.run_pending()
+    try:
 
-    time.sleep(1)
+        print("\n-----------------------------------")
+        print(
+            f"Bot cycle started: "
+            f"{datetime.now()}"
+        )
+        print("-----------------------------------")
+
+        update_heartbeat()
+
+        subprocess.run(
+            ["venv\\Scripts\\python.exe", "market_data.py"]
+)
+        
+
+        update_heartbeat()
+
+        print(
+            f"\nSleeping for "
+            f"{CHECK_INTERVAL_SECONDS} seconds..."
+        )
+
+        time.sleep(
+            CHECK_INTERVAL_SECONDS
+        )
+
+    except Exception as error:
+
+        print(
+            f"\nBOT ERROR: {error}"
+        )
+
+        time.sleep(30)

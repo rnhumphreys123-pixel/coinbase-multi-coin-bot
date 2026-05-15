@@ -352,9 +352,21 @@ with charts_tab:
     st.header("🕯️ Candlestick Charts")
 
     try:
-        candles_df = pd.read_csv(CANDLES_LOG_FILE, encoding="utf-8-sig")
+        candles_df = pd.read_csv(
+            CANDLES_LOG_FILE,
+            encoding="utf-8-sig"
+        )
+
         candles_df.columns = candles_df.columns.str.strip()
-        candles_df["timestamp"] = pd.to_datetime(candles_df["timestamp"])
+
+        candles_df["timestamp"] = pd.to_datetime(
+            candles_df["timestamp"],
+            errors="coerce"
+        )
+
+        candles_df = candles_df.dropna(
+            subset=["timestamp"]
+        )
 
         candles_df = candles_df[
             candles_df["symbol"].isin(ACTIVE_SYMBOLS)
