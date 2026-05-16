@@ -1,7 +1,7 @@
 import json
 import csv
 from datetime import datetime
-
+from config import TRADING_MODE
 from notifications import send_telegram_message
 from config import COIN_CONFIG, PORTFOLIO_SETTINGS
 
@@ -10,6 +10,14 @@ TRADE_LOG_FILE = "trade_log.csv"
 EVENT_LOG_FILE = "events_log.csv"
 EQUITY_LOG_FILE = "equity_log.csv"
 
+def live_trading_allowed():
+
+    return (
+        TRADING_MODE.get(
+            "live_trading_enabled",
+            False
+        ) is True
+    )
 
 class PaperTrader:
 
@@ -209,6 +217,16 @@ class PaperTrader:
         risk_per_trade=0.01
     ):
 
+        if TRADING_MODE["mode"] != "PAPER":
+
+            if not live_trading_allowed():
+
+                print(
+                    "LIVE trading blocked by safety lock."
+                )
+
+                return
+
         if self.position == 0:
 
             if stop_loss_price is None:
@@ -302,6 +320,16 @@ class PaperTrader:
         price,
         reason="Unknown"
     ):
+
+        if TRADING_MODE["mode"] != "PAPER":
+
+            if not live_trading_allowed():
+
+                print(
+                    "LIVE trading blocked by safety lock."
+                )
+
+                return
 
         if self.position > 0:
 
