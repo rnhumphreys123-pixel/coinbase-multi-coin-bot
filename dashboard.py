@@ -44,6 +44,7 @@ TRADE_LOG_FILE = "trade_log.csv"
 EVENT_LOG_FILE = "events_log.csv"
 SIGNALS_LOG_FILE = "signals_log.csv"
 CANDLES_LOG_FILE = "candles_log.csv"
+ENGINE_STATUS_FILE = "engine_status.json"
 
 st.title("🚀 Coinbase Multi-Coin Trading Dashboard")
 st.caption("Live paper trading command center")
@@ -172,6 +173,47 @@ with overview_tab:
     r3.metric("Portfolio Drawdown", f"{get_portfolio_drawdown() * 100:.2f}%")
 
     st.header("🧭 Bot Status Panel")
+
+    engine_status = "OFFLINE"
+
+    try:
+
+        with open(
+            ENGINE_STATUS_FILE,
+            "r"
+        ) as file:
+
+            engine_data = json.load(file)
+
+        heartbeat = engine_data.get(
+            "last_heartbeat"
+        )
+
+        if heartbeat:
+
+            heartbeat_time = pd.to_datetime(
+                heartbeat,
+                errors="coerce"
+            )
+
+            if pd.notna(heartbeat_time):
+
+                current_time = pd.Timestamp.now()
+
+                age_seconds = (
+                    current_time - heartbeat_time
+                ).total_seconds()
+
+                if age_seconds <= 420:
+                    engine_status = "ONLINE"
+
+    except Exception:
+        pass
+
+    st.metric(
+        "Engine",
+        engine_status
+    )
 
     bot_mode = "PAUSED" if is_bot_paused() else "RUNNING"
 
