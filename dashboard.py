@@ -4,6 +4,7 @@ import pandas as pd
 import json
 import plotly.graph_objects as go
 import subprocess
+from health_check import get_log_health
 
 from backup_manager import (
     create_project_backup,
@@ -517,6 +518,19 @@ with overview_tab:
     else:
 
         st.info("No recent activity yet.")
+
+    st.header("🩺 System Health")
+
+    log_health_rows = get_log_health()
+
+    log_health_df = pd.DataFrame(
+        log_health_rows
+    )
+
+    st.dataframe(
+        log_health_df,
+        use_container_width=True
+    )
 
     st.header("📌 Open Positions")
 
