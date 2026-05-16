@@ -1,6 +1,7 @@
 import time
 import json
 import subprocess
+import os
 
 from datetime import datetime
 
@@ -9,23 +10,37 @@ HEARTBEAT_FILE = "engine_status.json"
 CHECK_INTERVAL_SECONDS = 300
 
 
-def update_heartbeat():
+def load_engine_status():
 
-    heartbeat_data = {
-        "last_heartbeat": datetime.now().isoformat()
-    }
+    try:
+        with open(HEARTBEAT_FILE, "r") as file:
+            return json.load(file)
+
+    except FileNotFoundError:
+        return {}
+
+
+def save_engine_status(status):
 
     with open(HEARTBEAT_FILE, "w") as file:
-        json.dump(
-            heartbeat_data,
-            file,
-            indent=4
-        )
+        json.dump(status, file, indent=4)
+
+
+def update_heartbeat():
+
+    status = load_engine_status()
+
+    status["last_heartbeat"] = datetime.now().isoformat()
+    status["engine_pid"] = os.getpid()
+
+    save_engine_status(status)
 
 
 print("===================================")
 print("COINBASE MULTI-COIN BOT STARTED")
 print("===================================")
+
+update_heartbeat()
 
 while True:
 
@@ -42,8 +57,7 @@ while True:
 
         subprocess.run(
             ["venv\\Scripts\\python.exe", "market_data.py"]
-)
-        
+        )
 
         update_heartbeat()
 

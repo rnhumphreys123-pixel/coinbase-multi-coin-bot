@@ -4,6 +4,12 @@ import pandas as pd
 import json
 import plotly.graph_objects as go
 import subprocess
+from engine_control import (
+    start_engine,
+    stop_engine,
+    restart_engine
+)
+
 
 from bot_control import is_bot_paused, set_bot_paused
 
@@ -64,6 +70,36 @@ if st.sidebar.button("Pause Bot"):
 if st.sidebar.button("Resume Bot"):
     set_bot_paused(False)
     st.rerun()
+
+st.sidebar.markdown("---")
+st.sidebar.write("### Engine Controls")
+
+if st.sidebar.button("▶ Start Engine"):
+
+    success, message = start_engine()
+
+    if success:
+        st.sidebar.success(message)
+    else:
+        st.sidebar.warning(message)
+
+if st.sidebar.button("⏹ Stop Engine"):
+
+    success, message = stop_engine()
+
+    if success:
+        st.sidebar.success(message)
+    else:
+        st.sidebar.warning(message)
+
+if st.sidebar.button("🔄 Restart Engine"):
+
+    success, message = restart_engine()
+
+    if success:
+        st.sidebar.success(message)
+    else:
+        st.sidebar.warning(message)
 
 st.sidebar.markdown("---")
 
