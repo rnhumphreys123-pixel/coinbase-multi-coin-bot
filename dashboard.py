@@ -1355,7 +1355,19 @@ with config_tab:
             if backup["name"] == selected_backup_name
         )
 
-        if st.button("Restore Selected Backup"):
+            confirm_restore = st.checkbox(
+        "I understand this will overwrite live project files."
+    )
+
+    if st.button("Restore Selected Backup"):
+
+        if not confirm_restore:
+
+            st.error(
+                "Please confirm restore first."
+            )
+
+        else:
 
             restored_files = restore_backup(
                 selected_backup["path"]
