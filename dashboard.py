@@ -147,6 +147,27 @@ if st.sidebar.button("▶️ Run Bot Now"):
         )
 
 st.sidebar.markdown("---")
+st.sidebar.write("### Manual Reports")
+
+if st.sidebar.button("📅 Send Daily Summary"):
+    subprocess.Popen(
+        ["venv\\Scripts\\python.exe", "daily_summary.py"]
+    )
+    st.sidebar.success("Daily summary started.")
+
+if st.sidebar.button("📊 Send Performance Report"):
+    subprocess.Popen(
+        ["venv\\Scripts\\python.exe", "performance_report.py"]
+    )
+    st.sidebar.success("Performance report started.")
+
+if st.sidebar.button("🚪 Send Exit Reason Report"):
+    subprocess.Popen(
+        ["venv\\Scripts\\python.exe", "exit_reason_report.py"]
+    )
+    st.sidebar.success("Exit reason report started.")
+
+st.sidebar.markdown("---")
 st.sidebar.write("### Active Symbols")
 
 for symbol in ACTIVE_SYMBOLS:
@@ -1142,6 +1163,72 @@ with config_tab:
         st.success(
             "Telegram settings saved."
         )
+
+    st.subheader("Schedule Controls")
+
+    SCHEDULE_CONTROL_FILE = "schedule_control.json"
+
+    try:
+        with open(SCHEDULE_CONTROL_FILE, "r") as file:
+            schedule_control = json.load(file)
+    except FileNotFoundError:
+        schedule_control = {
+            "trading_check_minutes": 5,
+            "daily_summary_enabled": True,
+            "daily_summary_time": "20:00",
+            "performance_report_enabled": True,
+            "performance_report_time": "20:05",
+            "exit_reason_report_enabled": True,
+            "exit_reason_report_time": "20:10"
+        }
+
+    schedule_control["trading_check_minutes"] = st.number_input(
+        "Trading Check Interval - Minutes",
+        min_value=1,
+        max_value=1440,
+        value=int(schedule_control.get("trading_check_minutes", 5))
+    )
+
+    schedule_control["daily_summary_enabled"] = st.checkbox(
+        "Enable Daily Summary",
+        value=schedule_control.get("daily_summary_enabled", True)
+    )
+
+    schedule_control["daily_summary_time"] = st.text_input(
+        "Daily Summary Time",
+        value=schedule_control.get("daily_summary_time", "20:00")
+    )
+
+    schedule_control["performance_report_enabled"] = st.checkbox(
+        "Enable Performance Report",
+        value=schedule_control.get("performance_report_enabled", True)
+    )
+
+    schedule_control["performance_report_time"] = st.text_input(
+        "Performance Report Time",
+        value=schedule_control.get("performance_report_time", "20:05")
+    )
+
+    schedule_control["exit_reason_report_enabled"] = st.checkbox(
+        "Enable Exit Reason Report",
+        value=schedule_control.get("exit_reason_report_enabled", True)
+    )
+
+    schedule_control["exit_reason_report_time"] = st.text_input(
+        "Exit Reason Report Time",
+        value=schedule_control.get("exit_reason_report_time", "20:10")
+    )
+
+    if st.button("Save Schedule Settings"):
+
+        with open(SCHEDULE_CONTROL_FILE, "w") as file:
+            json.dump(
+                schedule_control,
+                file,
+                indent=4
+            )
+
+        st.success("Schedule settings saved.")
 
 st.markdown("---")
 st.caption("Coinbase Multi-Coin Paper Trading Dashboard")
