@@ -251,6 +251,90 @@ with overview_tab:
         engine_status
     )
 
+    st.subheader("🛠 Engine Details")
+
+    engine_pid = "Unknown"
+    last_started = "Unknown"
+    last_stopped = "Unknown"
+    last_heartbeat_display = "Unknown"
+
+    try:
+
+        with open(
+            ENGINE_STATUS_FILE,
+            "r"
+        ) as file:
+
+            engine_data = json.load(file)
+
+        engine_pid = engine_data.get(
+            "engine_pid",
+            "Unknown"
+        )
+
+        last_started = engine_data.get(
+            "last_started",
+            "Unknown"
+        )
+
+        engine_uptime = "Unknown"
+
+        try:
+
+            if last_started != "Unknown":
+
+                started_time = pd.to_datetime(
+                    last_started,
+                    errors="coerce"
+                )
+
+                if pd.notna(started_time):
+
+                    uptime_seconds = (
+                        pd.Timestamp.now()
+                        - started_time
+                    ).total_seconds()
+
+                    hours = int(
+                        uptime_seconds // 3600
+                    )
+
+                    minutes = int(
+                        (uptime_seconds % 3600) // 60
+                    )
+
+                    engine_uptime = (
+                        f"{hours}h {minutes}m"
+                    )
+
+        except Exception:
+            pass
+
+        last_stopped = engine_data.get(
+            "last_stopped",
+            "Unknown"
+        )
+
+        last_heartbeat_display = engine_data.get(
+            "last_heartbeat",
+            "Unknown"
+        )
+
+    except Exception:
+        pass
+
+    d1, d2 = st.columns(2)
+
+    with d1:
+        st.write(f"**PID:** {engine_pid}")
+        st.write(f"**Last Started:** {last_started}")
+
+        st.write(f"**Uptime:** {engine_uptime}")
+
+    with d2:
+        st.write(f"**Last Heartbeat:** {last_heartbeat_display}")
+        st.write(f"**Last Stopped:** {last_stopped}")
+
     bot_mode = "PAUSED" if is_bot_paused() else "RUNNING"
 
     last_signal_time = "No signal data"
