@@ -9,7 +9,7 @@ from engine_control import (
     stop_engine,
     restart_engine
 )
-
+from log_manager import archive_logs, archive_and_clear_logs
 from bot_control import is_bot_paused, set_bot_paused
 
 from config import (
@@ -1312,6 +1312,24 @@ with config_tab:
             )
 
         st.success("Schedule settings saved.")
+
+    st.subheader("Log Management")
+
+    if st.button("Archive Logs"):
+
+        archived_files = archive_logs()
+
+        st.success(
+            f"Archived {len(archived_files)} log files."
+        )
+
+    if st.button("Archive and Clear Logs"):
+
+        archived_files = archive_and_clear_logs()
+
+        st.warning(
+            f"Archived and cleared {len(archived_files)} log files."
+        )
 
 st.markdown("---")
 st.caption("Coinbase Multi-Coin Paper Trading Dashboard")
