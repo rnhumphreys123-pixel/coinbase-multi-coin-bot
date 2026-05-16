@@ -1162,6 +1162,20 @@ with config_tab:
 
     st.header("⚙️ Bot Configuration")
 
+    st.subheader("Trading Safety")
+
+    safety_df = pd.DataFrame([
+        {
+            "Trading Mode": TRADING_MODE["mode"],
+            "Live Trading Enabled": TRADING_MODE["live_trading_enabled"]
+        }
+    ])
+
+    st.dataframe(
+        safety_df,
+        use_container_width=True
+    )
+
     st.subheader("Portfolio Settings")
 
     portfolio_df = pd.DataFrame([
