@@ -1095,23 +1095,6 @@ with config_tab:
         use_container_width=True
     )
 
-    st.subheader("Telegram Defaults")
-
-    telegram_rows = []
-
-    for key, value in TELEGRAM_SETTINGS.items():
-
-        telegram_rows.append({
-            "Alert Type": key,
-            "Enabled": value
-        })
-
-    telegram_df = pd.DataFrame(telegram_rows)
-
-    st.dataframe(
-        telegram_df,
-        use_container_width=True
-    )
 
     st.subheader("Telegram Live Controls")
 
