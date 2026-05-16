@@ -24,7 +24,8 @@ from config import (
     ACTIVE_SYMBOLS,
     COIN_CONFIG,
     RISK_SETTINGS,
-    TELEGRAM_SETTINGS
+    TELEGRAM_SETTINGS,
+    TRADING_MODE
 )
 
 from risk_manager import (
@@ -85,6 +86,18 @@ if st.sidebar.button("Pause Bot"):
 if st.sidebar.button("Resume Bot"):
     set_bot_paused(False)
     st.rerun()
+
+st.sidebar.markdown("---")
+
+if TRADING_MODE["mode"] == "PAPER":
+    st.sidebar.info("Trading Mode: PAPER ONLY")
+else:
+    st.sidebar.error("Trading Mode: LIVE")
+
+if not TRADING_MODE["live_trading_enabled"]:
+    st.sidebar.success("Live Orders: LOCKED")
+else:
+    st.sidebar.error("Live Orders: ENABLED")
 
 st.sidebar.markdown("---")
 st.sidebar.write("### Engine Controls")
@@ -1355,7 +1368,7 @@ with config_tab:
             if backup["name"] == selected_backup_name
         )
 
-            confirm_restore = st.checkbox(
+        confirm_restore = st.checkbox(
         "I understand this will overwrite live project files."
     )
 

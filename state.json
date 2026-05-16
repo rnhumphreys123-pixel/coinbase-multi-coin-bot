@@ -4,7 +4,7 @@
         "position": 0,
         "entry_price": 0,
         "highest_price": 0,
-        "current_price": 78139.64,
+        "current_price": 78238.03,
         "trailing_stop_price": 0
     },
     "SOL/USD": {
@@ -12,7 +12,7 @@
         "position": 0,
         "entry_price": 0,
         "highest_price": 0,
-        "current_price": 86.57,
+        "current_price": 86.78,
         "trailing_stop_price": 0
     }
 }

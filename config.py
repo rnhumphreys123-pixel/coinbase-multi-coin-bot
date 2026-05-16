@@ -55,6 +55,10 @@ COIN_CONFIG = {
     }
 }
 
+TRADING_MODE = {
+    "mode": "PAPER",
+    "live_trading_enabled": False
+}
 
 ACTIVE_SYMBOLS = [
     "BTC/USD",
