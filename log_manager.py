@@ -73,3 +73,34 @@ def archive_and_clear_logs():
         clear_log_file(log_file)
 
     return archived_files
+
+MAX_LOG_SIZE_MB = 5
+
+
+def get_file_size_mb(file_path):
+
+    if not os.path.exists(file_path):
+        return 0
+
+    size_bytes = os.path.getsize(file_path)
+
+    return size_bytes / (1024 * 1024)
+
+
+def auto_rotate_logs():
+
+    rotated_files = []
+
+    for log_file in LOG_FILES:
+
+        file_size_mb = get_file_size_mb(log_file)
+
+        if file_size_mb >= MAX_LOG_SIZE_MB:
+
+            archived_files = archive_logs()
+
+            clear_log_file(log_file)
+
+            rotated_files.append(log_file)
+
+    return rotated_files

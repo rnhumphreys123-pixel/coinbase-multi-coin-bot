@@ -2,6 +2,7 @@ import time
 import json
 import subprocess
 import os
+from log_manager import auto_rotate_logs
 
 from datetime import datetime, date
 
@@ -91,6 +92,15 @@ while True:
         run_script("market_data.py")
 
         update_heartbeat()
+
+        rotated_files = auto_rotate_logs()
+
+        if rotated_files:
+
+            print(
+                f"Auto-rotated logs: "
+                f"{rotated_files}"
+            )
 
         now = datetime.now()
         today = date.today()
