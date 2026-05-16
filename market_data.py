@@ -312,9 +312,9 @@ for symbol in ACTIVE_SYMBOLS:
 
                     print(message)
 
-                    trader.log_event(
-                        "RISK_BLOCK",
-                        message
+                    send_telegram_message(
+                         message,
+                         "send_risk_block_alerts"
                     )
 
                     send_telegram_message(message)

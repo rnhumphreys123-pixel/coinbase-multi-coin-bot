@@ -64,4 +64,7 @@ for _, row in latest_rows.iterrows():
     print(line)
     message += line + "\n"
 
-send_telegram_message(message)
+send_telegram_message(
+    message,
+    "send_performance_report"
+)

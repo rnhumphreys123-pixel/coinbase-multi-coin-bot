@@ -13,7 +13,13 @@ from engine_control import (
 
 from bot_control import is_bot_paused, set_bot_paused
 
-from config import PORTFOLIO_SETTINGS, ACTIVE_SYMBOLS
+from config import (
+    PORTFOLIO_SETTINGS,
+    ACTIVE_SYMBOLS,
+    COIN_CONFIG,
+    RISK_SETTINGS,
+    TELEGRAM_SETTINGS
+)
 
 from risk_manager import (
     get_total_exposure,
@@ -1032,8 +1038,6 @@ with config_tab:
 
     st.header("⚙️ Bot Configuration")
 
-    from config import COIN_CONFIG, RISK_SETTINGS, PORTFOLIO_SETTINGS
-
     st.subheader("Portfolio Settings")
 
     portfolio_df = pd.DataFrame([
@@ -1091,65 +1095,70 @@ with config_tab:
         use_container_width=True
     )
 
-    st.header("🧠 Event Log")
+    st.subheader("Telegram Defaults")
+
+    telegram_rows = []
+
+    for key, value in TELEGRAM_SETTINGS.items():
+
+        telegram_rows.append({
+            "Alert Type": key,
+            "Enabled": value
+        })
+
+    telegram_df = pd.DataFrame(telegram_rows)
+
+    st.dataframe(
+        telegram_df,
+        use_container_width=True
+    )
+
+    st.subheader("Telegram Live Controls")
+
+    TELEGRAM_CONTROL_FILE = "telegram_control.json"
 
     try:
-        events_df = pd.read_csv(EVENT_LOG_FILE, encoding="utf-8-sig")
-        events_df.columns = events_df.columns.str.strip()
 
-        if "symbol" in events_df.columns:
-            events_df = events_df[
-                events_df["symbol"].isin(ACTIVE_SYMBOLS)
-            ]
+        with open(
+            TELEGRAM_CONTROL_FILE,
+            "r"
+        ) as file:
 
-        event_col1, event_col2 = st.columns(2)
-
-        with event_col1:
-            selected_event_symbol = st.selectbox(
-                "Filter Events by Symbol",
-                ["All"] + ACTIVE_SYMBOLS
-            )
-
-        with event_col2:
-            event_row_limit = st.selectbox(
-                "Event Rows to Show",
-                [10, 25, 50, 100],
-                index=2
-            )
-
-        filtered_events = events_df.copy()
-
-        if selected_event_symbol != "All":
-            filtered_events = filtered_events[
-                filtered_events["symbol"] == selected_event_symbol
-            ]
-
-        st.dataframe(
-            filtered_events.tail(event_row_limit),
-            use_container_width=True
-        )
+            telegram_control = json.load(file)
 
     except FileNotFoundError:
-        st.info("No event log found yet.")
 
-    st.header("🧠 Recent Bot Events")
-
-    try:
-        events_df = pd.read_csv(EVENT_LOG_FILE, encoding="utf-8-sig")
-        events_df.columns = events_df.columns.str.strip()
-
-        if "symbol" in events_df.columns:
-            events_df = events_df[
-                events_df["symbol"].isin(ACTIVE_SYMBOLS)
-            ]
-
-        st.dataframe(
-            events_df.tail(50),
-            use_container_width=True
+        telegram_control = (
+            TELEGRAM_SETTINGS.copy()
         )
 
-    except FileNotFoundError:
-        st.info("No event log found yet.")
+    updated_control = {}
+
+    for key, value in telegram_control.items():
+
+        updated_control[key] = st.checkbox(
+            key,
+            value=value
+        )
+
+    if st.button(
+        "Save Telegram Settings"
+    ):
+
+        with open(
+            TELEGRAM_CONTROL_FILE,
+            "w"
+        ) as file:
+
+            json.dump(
+                updated_control,
+                file,
+                indent=4
+            )
+
+        st.success(
+            "Telegram settings saved."
+        )
 
 st.markdown("---")
 st.caption("Coinbase Multi-Coin Paper Trading Dashboard")

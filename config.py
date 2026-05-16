@@ -73,3 +73,14 @@ RISK_SETTINGS = {
     "max_open_positions": 2,
     "portfolio_drawdown_limit": -0.05
 }
+
+TELEGRAM_SETTINGS = {
+    "send_buy_alerts": True,
+    "send_sell_alerts": True,
+    "send_risk_block_alerts": True,
+    "send_daily_summary": True,
+    "send_performance_report": True,
+    "send_exit_reason_report": True,
+    "send_hold_alerts": False,
+    "send_no_trade_alerts": False
+}

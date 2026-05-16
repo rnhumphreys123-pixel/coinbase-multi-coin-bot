@@ -117,4 +117,7 @@ print("==============================")
 
 print(message)
 
-send_telegram_message(message)
+send_telegram_message(
+    message,
+    "send_daily_summary"
+)

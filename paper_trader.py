@@ -281,10 +281,13 @@ class PaperTrader:
             )
 
             send_telegram_message(
+            (
                 f"🟢 BUY {self.symbol}\n"
                 f"Price: ${price:.2f}\n"
                 f"Amount: ${amount_to_spend:.2f}\n"
                 f"Risk: {risk_per_trade * 100:.2f}%"
+            ),
+                "send_buy_alerts"
             )
 
         else:
@@ -336,10 +339,13 @@ class PaperTrader:
             )
 
             send_telegram_message(
-                f"🔴 SELL {self.symbol}\n"
-                f"Price: ${price:.2f}\n"
-                f"Profit: ${profit:.2f}\n"
-                f"Reason: {reason}"
+            (
+                 f"🔴 SELL {self.symbol}\n"
+                 f"Price: ${price:.2f}\n"
+                 f"Profit: ${profit:.2f}\n"
+                 f"Reason: {reason}"
+            ),
+                 "send_sell_alerts"
             )
 
             self.position = 0

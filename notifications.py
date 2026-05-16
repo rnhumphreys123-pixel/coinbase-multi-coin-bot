@@ -1,30 +1,55 @@
-from urllib import response
-
-import requests
 import os
+import json
+import requests
+
 from dotenv import load_dotenv
+from config import TELEGRAM_SETTINGS
 
 load_dotenv()
 
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+TELEGRAM_CONTROL_FILE = "telegram_control.json"
 
 
-def send_telegram_message(message):
+def load_telegram_settings():
+    try:
+        with open(TELEGRAM_CONTROL_FILE, "r") as file:
+            return json.load(file)
 
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    except FileNotFoundError:
+        return TELEGRAM_SETTINGS
+
+
+def telegram_enabled(alert_type):
+    settings = load_telegram_settings()
+
+    return settings.get(
+        alert_type,
+        TELEGRAM_SETTINGS.get(alert_type, True)
+    )
+
+
+def send_telegram_message(message, alert_type="general"):
+    if not telegram_enabled(alert_type):
+        return
+
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print("Telegram credentials missing.")
+        return
+
+    url = (
+        f"https://api.telegram.org/bot"
+        f"{TELEGRAM_BOT_TOKEN}/sendMessage"
+    )
 
     payload = {
-        "chat_id": CHAT_ID,
+        "chat_id": TELEGRAM_CHAT_ID,
         "text": message
     }
 
-    try:
-        response = requests.post(url, data=payload)
+    response = requests.post(url, data=payload)
 
-        if response.status_code != 200:
-            print(response.status_code)
-            print(response.text)
-
-    except Exception as e:
-        print(f"Telegram error: {e}")
+    print(response.status_code)
+    print(response.text)
