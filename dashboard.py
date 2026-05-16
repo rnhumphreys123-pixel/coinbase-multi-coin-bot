@@ -10,7 +10,6 @@ from engine_control import (
     restart_engine
 )
 
-
 from bot_control import is_bot_paused, set_bot_paused
 
 from config import (
@@ -31,6 +30,9 @@ st.set_page_config(
     page_title="Coinbase Trading Bot Dashboard",
     layout="wide"
 )
+
+events_df = pd.DataFrame()
+trades_df = pd.DataFrame()
 
 st.markdown("""
 <style>
@@ -414,6 +416,49 @@ with overview_tab:
     s2.metric("Last Signal", format_time(last_signal_time))
     s3.metric("Last Candle", format_time(last_candle_time))
     s4.metric("Last Trade", format_time(last_trade_time))
+
+    st.header("📰 Activity Feed")
+
+    activity_rows = []
+
+    if not events_df.empty:
+        recent_events = events_df.tail(10).copy()
+
+        for _, row in recent_events.iterrows():
+            activity_rows.append({
+                "Time": format_time(row.get("timestamp", "")),
+                "Type": row.get("event", "EVENT"),
+                "Symbol": row.get("symbol", ""),
+                "Message": row.get("message", "")
+            })
+
+    if not trades_df.empty:
+        recent_trades = trades_df.tail(10).copy()
+
+        for _, row in recent_trades.iterrows():
+            activity_rows.append({
+                "Time": format_time(row.get("timestamp", "")),
+                "Type": row.get("action", "TRADE"),
+                "Symbol": row.get("symbol", ""),
+                "Message": (
+                    f"{row.get('action', '')} at "
+                    f"${row.get('price', '')} "
+                    f"Profit: ${row.get('profit', '')}"
+                )
+            })
+
+    if activity_rows:
+
+        activity_df = pd.DataFrame(activity_rows)
+
+        st.dataframe(
+            activity_df.tail(15),
+            use_container_width=True
+        )
+
+    else:
+
+        st.info("No recent activity yet.")
 
     st.header("📌 Open Positions")
 
