@@ -78,4 +78,7 @@ for _, row in summary.iterrows():
         f"${row['average_profit']:.2f}\n\n"
     )
 
-send_telegram_message(message)
+send_telegram_message(
+    message,
+    "send_exit_reason_report"
+)

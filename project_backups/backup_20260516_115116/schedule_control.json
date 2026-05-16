@@ -1,0 +1,9 @@
+{
+    "trading_check_minutes": 5,
+    "daily_summary_enabled": true,
+    "daily_summary_time": "07:00",
+    "performance_report_enabled": true,
+    "performance_report_time": "07:05",
+    "exit_reason_report_enabled": true,
+    "exit_reason_report_time": "07:10"
+}

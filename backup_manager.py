@@ -59,3 +59,55 @@ def create_project_backup():
             copied_files.append(file_name)
 
     return backup_path, copied_files
+
+def list_project_backups():
+
+    if not os.path.exists(BACKUP_FOLDER):
+        return []
+
+    backups = []
+
+    for folder_name in os.listdir(BACKUP_FOLDER):
+
+        folder_path = os.path.join(
+            BACKUP_FOLDER,
+            folder_name
+        )
+
+        if os.path.isdir(folder_path):
+
+            backups.append({
+                "name": folder_name,
+                "path": folder_path
+            })
+
+    backups = sorted(
+        backups,
+        key=lambda item: item["name"],
+        reverse=True
+    )
+
+    return backups
+
+
+def restore_backup(backup_path):
+
+    restored_files = []
+
+    for file_name in FILES_TO_BACKUP:
+
+        source = os.path.join(
+            backup_path,
+            file_name
+        )
+
+        if os.path.exists(source):
+
+            shutil.copy2(
+                source,
+                file_name
+            )
+
+            restored_files.append(file_name)
+
+    return restored_files

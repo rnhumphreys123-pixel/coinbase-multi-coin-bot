@@ -1,0 +1,10 @@
+{
+    "send_buy_alerts": true,
+    "send_sell_alerts": true,
+    "send_risk_block_alerts": true,
+    "send_daily_summary": true,
+    "send_performance_report": true,
+    "send_exit_reason_report": true,
+    "send_hold_alerts": false,
+    "send_no_trade_alerts": false
+}

@@ -4,7 +4,12 @@ import pandas as pd
 import json
 import plotly.graph_objects as go
 import subprocess
-from backup_manager import create_project_backup
+
+from backup_manager import (
+    create_project_backup,
+    list_project_backups,
+    restore_backup
+)
 
 from engine_control import (
     start_engine,
@@ -1328,6 +1333,42 @@ with config_tab:
         st.write(
             f"Files backed up: {len(copied_files)}"
         )
+
+    st.subheader("Restore Project Backup")
+
+    backups = list_project_backups()
+
+    if backups:
+
+        backup_names = [
+            backup["name"]
+            for backup in backups
+        ]
+
+        selected_backup_name = st.selectbox(
+            "Choose Backup to Restore",
+            backup_names
+        )
+
+        selected_backup = next(
+            backup for backup in backups
+            if backup["name"] == selected_backup_name
+        )
+
+        if st.button("Restore Selected Backup"):
+
+            restored_files = restore_backup(
+                selected_backup["path"]
+            )
+
+            st.warning(
+                f"Restored {len(restored_files)} files "
+                f"from {selected_backup_name}."
+            )
+
+    else:
+
+        st.info("No backups found yet.")
 
     st.subheader("Log Management")
 
