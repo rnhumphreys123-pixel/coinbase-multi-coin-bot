@@ -4,6 +4,8 @@ import pandas as pd
 import json
 import plotly.graph_objects as go
 import subprocess
+from backup_manager import create_project_backup
+
 from engine_control import (
     start_engine,
     stop_engine,
@@ -1312,6 +1314,20 @@ with config_tab:
             )
 
         st.success("Schedule settings saved.")
+
+    st.subheader("Project Backup")
+
+    if st.button("Create Project Backup"):
+
+        backup_path, copied_files = create_project_backup()
+
+        st.success(
+            f"Backup created: {backup_path}"
+        )
+
+        st.write(
+            f"Files backed up: {len(copied_files)}"
+        )
 
     st.subheader("Log Management")
 
