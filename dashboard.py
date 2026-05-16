@@ -447,6 +447,44 @@ with overview_tab:
                 )
             })
 
+    feed_filter = st.selectbox(
+        "Activity Filter",
+        [
+            "All",
+            "Trades",
+            "Events",
+            "Risk",
+            "Reports"
+        ]
+    )
+
+    if feed_filter != "All":
+
+        if feed_filter == "Trades":
+            activity_rows = [
+                row for row in activity_rows
+                if row["Type"] in ["BUY", "SELL"]
+            ]
+
+        elif feed_filter == "Risk":
+            activity_rows = [
+                row for row in activity_rows
+                if "RISK" in row["Type"]
+            ]
+
+        elif feed_filter == "Reports":
+            activity_rows = [
+                row for row in activity_rows
+                if "REPORT" in row["Type"]
+                or "SUMMARY" in row["Type"]
+            ]
+
+        elif feed_filter == "Events":
+            activity_rows = [
+                row for row in activity_rows
+                if row["Type"] not in ["BUY", "SELL"]
+            ]
+
     if activity_rows:
 
         activity_df = pd.DataFrame(activity_rows)
