@@ -1,8 +1,7 @@
 import json
 import subprocess
-import os
-import signal
 from datetime import datetime
+import pandas as pd
 
 ENGINE_STATUS_FILE = "engine_status.json"
 
@@ -23,13 +22,37 @@ def save_engine_status(status):
         json.dump(status, file, indent=4)
 
 
+def heartbeat_is_fresh(seconds=420):
+    status = load_engine_status()
+
+    last_heartbeat = status.get("last_heartbeat")
+
+    if not last_heartbeat:
+        return False
+
+    heartbeat_time = pd.to_datetime(
+        last_heartbeat,
+        errors="coerce"
+    )
+
+    if pd.isna(heartbeat_time):
+        return False
+
+    age_seconds = (
+        pd.Timestamp.now()
+        - heartbeat_time
+    ).total_seconds()
+
+    return age_seconds <= seconds
+
+
 def start_engine():
     status = load_engine_status()
 
     existing_pid = status.get("engine_pid")
 
-    if existing_pid:
-        return False, f"Engine may already be running. PID: {existing_pid}"
+    if existing_pid and heartbeat_is_fresh():
+        return False, f"Engine already appears online. PID: {existing_pid}"
 
     process = subprocess.Popen(
         ["venv\\Scripts\\python.exe", "bot.py"],
