@@ -2,6 +2,7 @@ import json
 import subprocess
 from datetime import datetime
 import pandas as pd
+from notification_center import log_notification
 
 ENGINE_STATUS_FILE = "engine_status.json"
 
@@ -63,7 +64,11 @@ def start_engine():
     status["last_started"] = datetime.now().isoformat()
 
     save_engine_status(status)
-
+    log_notification(
+        "INFO",
+        "ENGINE",
+        f"Engine started. PID: {process.pid}"
+    )
     return True, f"Engine started. PID: {process.pid}"
 
 
@@ -87,7 +92,11 @@ def stop_engine():
         status["last_stopped"] = datetime.now().isoformat()
 
         save_engine_status(status)
-
+        log_notification(
+            "WARNING",
+            "ENGINE",
+            "Engine stopped."
+        )
         return True, "Engine stopped."
 
     except Exception as error:
@@ -95,5 +104,15 @@ def stop_engine():
 
 
 def restart_engine():
+
     stop_engine()
-    return start_engine()
+
+    success, message = start_engine()
+
+    log_notification(
+        "INFO",
+        "ENGINE",
+        "Engine restarted."
+    )
+
+    return success, message

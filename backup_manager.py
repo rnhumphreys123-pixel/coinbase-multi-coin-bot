@@ -1,6 +1,7 @@
 import os
 import shutil
 from datetime import datetime
+from notification_center import log_notification
 
 BACKUP_FOLDER = "project_backups"
 
@@ -58,6 +59,12 @@ def create_project_backup():
 
             copied_files.append(file_name)
 
+    log_notification(
+        "INFO",
+        "BACKUP",
+        f"Project backup created: {backup_path}"
+    )
+
     return backup_path, copied_files
 
 def list_project_backups():
@@ -109,5 +116,11 @@ def restore_backup(backup_path):
             )
 
             restored_files.append(file_name)
+
+    log_notification(
+        "WARNING",
+        "BACKUP",
+        f"Backup restored from: {backup_path}"
+    )
 
     return restored_files

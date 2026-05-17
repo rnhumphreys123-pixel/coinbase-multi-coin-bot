@@ -1,6 +1,7 @@
 import os
 import shutil
 from datetime import datetime
+from notification_center import log_notification
 
 LOG_FILES = [
     "trade_log.csv",
@@ -100,7 +101,11 @@ def auto_rotate_logs():
             archived_files = archive_logs()
 
             clear_log_file(log_file)
-
+            log_notification(
+                "INFO",
+                "LOG_ROTATION",
+                f"Auto-rotated log: {log_file}"
+            )
             rotated_files.append(log_file)
 
     return rotated_files

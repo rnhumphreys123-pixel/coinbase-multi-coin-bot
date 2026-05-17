@@ -42,6 +42,7 @@ st.set_page_config(
 
 events_df = pd.DataFrame()
 trades_df = pd.DataFrame()
+notification_df = pd.DataFrame()
 
 st.markdown("""
 <style>
@@ -68,6 +69,27 @@ EVENT_LOG_FILE = "events_log.csv"
 SIGNALS_LOG_FILE = "signals_log.csv"
 CANDLES_LOG_FILE = "candles_log.csv"
 ENGINE_STATUS_FILE = "engine_status.json"
+NOTIFICATION_CENTER_FILE = "notification_center.csv"
+
+try:
+    notification_df = pd.read_csv(
+        NOTIFICATION_CENTER_FILE,
+        encoding="utf-8-sig"
+    )
+
+    notification_df.columns = notification_df.columns.str.strip()
+
+    notification_df["timestamp"] = pd.to_datetime(
+        notification_df["timestamp"],
+        errors="coerce"
+    )
+
+    notification_df = notification_df.dropna(
+        subset=["timestamp"]
+    )
+
+except FileNotFoundError:
+    notification_df = pd.DataFrame()
 
 st.title("🚀 Coinbase Multi-Coin Trading Dashboard")
 st.caption("Live paper trading command center")
@@ -518,6 +540,21 @@ with overview_tab:
     else:
 
         st.info("No recent activity yet.")
+
+    st.header("🔔 Notification Center")
+
+    if not notification_df.empty:
+
+        st.dataframe(
+            notification_df.tail(20),
+            use_container_width=True
+        )
+
+    else:
+
+        st.info(
+            "No system notifications yet."
+        )
 
     st.header("🩺 System Health")
 
