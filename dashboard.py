@@ -541,6 +541,49 @@ with overview_tab:
 
         st.info("No recent activity yet.")
 
+st.sidebar.markdown("---")
+st.sidebar.write("### Notification Summary")
+
+error_count = 0
+warning_count = 0
+latest_issue = "None"
+
+if not notification_df.empty:
+
+    if "level" in notification_df.columns:
+
+        error_count = len(
+            notification_df[
+                notification_df["level"] == "ERROR"
+            ]
+        )
+
+        warning_count = len(
+            notification_df[
+                notification_df["level"] == "WARNING"
+            ]
+        )
+
+        issues_df = notification_df[
+            notification_df["level"].isin(
+                ["ERROR", "WARNING"]
+            )
+        ]
+
+        if not issues_df.empty:
+            latest_issue = issues_df.tail(1).iloc[0].get(
+                "message",
+                "Unknown issue"
+            )
+
+st.sidebar.metric("Errors", error_count)
+st.sidebar.metric("Warnings", warning_count)
+
+if latest_issue != "None":
+    st.sidebar.warning(f"Latest: {latest_issue}")
+else:
+    st.sidebar.success("No active issues")
+
     st.header("🔔 Notification Center")
 
     if not notification_df.empty:

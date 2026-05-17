@@ -3,7 +3,7 @@ import json
 import subprocess
 import os
 from log_manager import auto_rotate_logs
-
+from notification_center import log_notification
 from datetime import datetime, date
 
 HEARTBEAT_FILE = "engine_status.json"
@@ -142,8 +142,18 @@ while True:
 
         time.sleep(sleep_seconds)
 
-    except Exception as error:
+      except Exception as error:
 
-        print(f"\nBOT ERROR: {error}")
+        error_message = (
+            f"BOT ERROR: {error}"
+        )
+
+        print(f"\n{error_message}")
+
+        log_notification(
+            "ERROR",
+            "ENGINE",
+            error_message
+        )
 
         time.sleep(30)
