@@ -544,11 +544,33 @@ with overview_tab:
     st.header("🔔 Notification Center")
 
     if not notification_df.empty:
+        notification_filter = st.selectbox(
+            "Notification Filter",
+            [
+                "All",
+                "INFO",
+                "WARNING",
+                "ERROR",
+                "ENGINE",
+                "BACKUP",
+                "LOG_ROTATION"
+            ]
+        )
+
+        filtered_notifications = notification_df.copy()
+
+        if notification_filter != "All":
+
+            filtered_notifications = filtered_notifications[
+                (filtered_notifications["level"] == notification_filter)
+                | (filtered_notifications["category"] == notification_filter)
+            ]
 
         st.dataframe(
-            notification_df.tail(20),
+            filtered_notifications.tail(20),
             use_container_width=True
         )
+        
 
     else:
 
